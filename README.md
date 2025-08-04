@@ -1,4 +1,4 @@
-# Template
+# Bitespeed Backend Assignment
 
 - Typescript
 - Node.js
