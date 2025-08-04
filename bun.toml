@@ -1,0 +1,30 @@
+# bunfig.toml
+
+# Entry point for your server
+entrypoints = ["src/server.ts"]
+
+# Output directory for builds (optional, only needed if you run `bun build`)
+outdir = "dist"
+
+# TypeScript config — Bun will respect tsconfig.json paths automatically
+tsconfig = "tsconfig.json"
+
+# Target environment (node or browser)
+target = "node"
+
+# Use bun's transpiler instead of tsc for faster builds
+# Automatically handles ts, tsx, js, jsx
+compile = true
+
+# Treat modules as CommonJS
+# Bun can auto-detect, but we'll be explicit since you're using "commonjs" in tsconfig
+module = "commonjs"
+
+# Enable source maps for debugging
+sourcemap = true
+
+# Whether to minify output (only applies to `bun build`)
+minify = false
+
+# External dependencies to not bundle (optional)
+# external = ["pg", "redis", "some-native-lib"] 
