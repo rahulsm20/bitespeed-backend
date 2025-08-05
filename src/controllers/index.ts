@@ -52,9 +52,24 @@ export const identityReconiciliationController = async (
     return res.status(200).json({ contact: formatResponse(newUser) });
   } else {
     // turn all related expect oldest contact to secondary
-    const primaryContact = user.find(
-      (contact) => contact.linkPrecedence === LinkPrecedence.primary
-    );
+    const OR: any[] = [];
+    if (email) OR.push({ email: { equals: email, mode: "insensitive" } });
+    if (phoneNumber) OR.push({ phoneNumber: { equals: phoneNumber } });
+    const debug = await prisma.contact.findMany({ where: { OR } });
+    console.log({ debug });
+
+    const primaryContact = await prisma.contact.findFirst({
+      where: {
+        linkPrecedence: LinkPrecedence.primary,
+        ...(OR.length > 0 && { OR }),
+      },
+      include: {
+        primaryContact: true,
+        secondaryContacts: true,
+      },
+    });
+
+    console.log({ primaryContact });
     if (!primaryContact) {
       return res.status(404).json({ error: "Primary contact not found." });
     }
@@ -62,6 +77,7 @@ export const identityReconiciliationController = async (
     await prisma.contact.updateMany({
       where: {
         id: {
+          in: user.map((contact) => contact.id),
           not: primaryContact.id,
         },
       },
