@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { identityReconiciliationController } from "./controllers";
+import { identityReconciliationController } from "./controllers";
 
 //--------------------------------------------------------------------------
 
@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.post("/identify", identityReconiciliationController);
+app.post("/identify", identityReconciliationController);
 
 app.get("/", async (req: Request, res: Response) => {
   return res.status(200).json({

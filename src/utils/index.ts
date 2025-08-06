@@ -12,6 +12,11 @@ type ResultType = {
 
 //--------------------------------------------------------------------------
 
+export const contactIncludes = {
+  primaryContact: true,
+  secondaryContacts: true,
+};
+
 export const formatResponse = (contact: ContactWithPayload) => {
   const res: ResultType = {
     primaryContactId: 0,
@@ -64,3 +69,10 @@ export const formatResponse = (contact: ContactWithPayload) => {
   res.phoneNumbers = Array.from(phoneNumbers);
   return res;
 };
+
+export function buildFilters(email?: string, phoneNumber?: string) {
+  const filters = [];
+  if (email) filters.push({ email: { equals: email, mode: "insensitive" } });
+  if (phoneNumber) filters.push({ phoneNumber });
+  return filters;
+}
