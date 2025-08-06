@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "build": "bun build src/server.ts --outdir ./dist --target node && bunx prisma generate --schema=./src/prisma/schema.prisma",
+    "build": " bunx prisma generate --schema=./src/prisma/schema.prisma && bun build src/server.ts --outdir ./dist --target node",
     "start": "bun dist/server.js",
     "migrate": "bunx prisma migrate dev --schema=./src/prisma/schema.prisma",
     "db_deploy": "bunx prisma migrate deploy --schema=./src/prisma/schema.prisma && bunx prisma generate --schema=./src/prisma/schema.prisma"
