@@ -3,16 +3,24 @@ import { LinkPrecedence } from "@prisma/client";
 import { Request, Response } from "express";
 import { prisma } from "../prisma/client";
 
-export const identityReconciliationController = async (req: Request, res: Response) => {
-  const { email, phoneNumber } = req.body as { email?: string; phoneNumber?: string };
-
+export const identityReconciliationController = async (
+  req: Request,
+  res: Response
+) => {
+  const { email, phoneNumber } = req.body as {
+    email?: string;
+    phoneNumber?: string;
+  };
+  console.log({ email, phoneNumber });
   if (!email && !phoneNumber) {
-    return res.status(400).json({ error: "Email or phone number is required." });
+    return res
+      .status(400)
+      .json({ error: "Email or phone number is required." });
   }
   const OR: any[] = buildFilters(email, phoneNumber);
   const relatedContacts = await prisma.contact.findMany({
     where: {
-      OR
+      OR,
     },
     orderBy: { createdAt: "asc" },
     include: { primaryContact: true, secondaryContacts: true },
@@ -31,30 +39,60 @@ export const identityReconciliationController = async (req: Request, res: Respon
       include: { primaryContact: true, secondaryContacts: true },
     });
   } else {
-    const oldest = relatedContacts[0];
+    // go through all related contacts and set the first one as primary
+    const allPrimaries = [];
+    for (const c of relatedContacts) {
+      if (c.linkPrecedence === LinkPrecedence.primary) allPrimaries.push(c);
+      if (
+        c.primaryContact &&
+        c.primaryContact.linkPrecedence === LinkPrecedence.primary
+      ) {
+        allPrimaries.push(c.primaryContact);
+      }
+    }
+    const oldest = allPrimaries.reduce((oldest, current) => {
+      return current.createdAt < oldest.createdAt ? current : oldest;
+    });
 
     if (oldest.linkPrecedence !== LinkPrecedence.primary) {
       primaryContact = await prisma.contact.update({
         where: { id: oldest.id },
-        data: { linkPrecedence: LinkPrecedence.primary, primaryContactId: null },
+        data: {
+          linkPrecedence: LinkPrecedence.primary,
+          primaryContactId: null,
+        },
         include: { primaryContact: true, secondaryContacts: true },
       });
     } else {
       primaryContact = oldest;
     }
 
-    const secondaryIds = relatedContacts.slice(1).map(c => c.id);
+    const secondaryIds = relatedContacts
+      .filter((c) => c.id != oldest.id)
+      .map((c) => c.id);
+
     if (secondaryIds.length > 0) {
       await prisma.contact.updateMany({
         where: { id: { in: secondaryIds } },
-        data: { linkPrecedence: LinkPrecedence.secondary, primaryContactId: primaryContact.id },
+        data: {
+          linkPrecedence: LinkPrecedence.secondary,
+          primaryContactId: primaryContact.id,
+        },
       });
     }
 
-    const existingEmails = new Set(relatedContacts.map(c => c.email).filter(Boolean));
-    const existingPhones = new Set(relatedContacts.map(c => c.phoneNumber).filter(Boolean));
+    const existingEmails = new Set(
+      relatedContacts.map((c) => c.email).filter(Boolean)
+    );
 
-    if ((email && !existingEmails.has(email)) || (phoneNumber && !existingPhones.has(phoneNumber))) {
+    const existingPhones = new Set(
+      relatedContacts.map((c) => c.phoneNumber).filter(Boolean)
+    );
+
+    if (
+      (email && !existingEmails.has(email)) ||
+      (phoneNumber && !existingPhones.has(phoneNumber))
+    ) {
       await prisma.contact.create({
         data: {
           email,

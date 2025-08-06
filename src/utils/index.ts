@@ -65,8 +65,12 @@ export const formatResponse = (contact: ContactWithPayload) => {
     });
   }
 
-  res.emails = Array.from(emails);
-  res.phoneNumbers = Array.from(phoneNumbers);
+  res.emails = Array.from(emails).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  );
+  res.phoneNumbers = Array.from(phoneNumbers).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  );
   return res;
 };
 
